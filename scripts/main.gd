@@ -11,6 +11,7 @@ var player: SnodlandPlayer
 var camera: Camera3D
 var rental_marker: Node3D
 var hud: Label
+var ui_root: Control
 var objective: Label
 var money_label: Label
 var dialogue_panel: PanelContainer
@@ -27,7 +28,8 @@ func _ready() -> void:
 	_make_player()
 	_make_camera()
 	_make_ui()
-	_show_opening_message()
+	if not _load_saved_game():
+		_show_opening_message()
 
 func _process(delta: float) -> void:
 	if player == null: return
@@ -167,7 +169,6 @@ func _make_rental_marker() -> void:
 	torus.outer_radius = 1.0
 	ring.mesh = torus
 	ring.material_override = materials.marker
-	ring.rotation.x = PI / 2.0
 	rental_marker.add_child(ring)
 	var beacon := MeshInstance3D.new()
 	var cylinder := CylinderMesh.new()
@@ -226,6 +227,7 @@ func _make_ui() -> void:
 	var root := Control.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(root)
+	ui_root = root
 	objective = Label.new()
 	objective.position = Vector2(22, 18)
 	objective.add_theme_font_size_override("font_size", 22)
@@ -269,7 +271,7 @@ func _show_opening_message() -> void:
 	style.set_corner_radius_all(10)
 	style.set_content_margin_all(22)
 	dialogue_panel.add_theme_stylebox_override("panel", style)
-	add_child(dialogue_panel)
+	ui_root.add_child(dialogue_panel)
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 14)
 	dialogue_panel.add_child(content)
@@ -371,3 +373,22 @@ func _save_game() -> void:
 		hud.text = "GAME SAVED  •  Welcome home."
 	else:
 		hud.text = "Save failed. Check available storage."
+
+func _load_saved_game() -> bool:
+	var cfg := ConfigFile.new()
+	if cfg.load(SAVE_PATH) != OK:
+		return false
+	if not bool(cfg.get_value("progress", "rented", false)):
+		return false
+	rented = true
+	mission_started = true
+	money = int(cfg.get_value("progress", "money", 0))
+	player.global_position = Vector3(
+		float(cfg.get_value("player", "x", FLAT_POSITION.x)),
+		0.1,
+		float(cfg.get_value("player", "z", FLAT_POSITION.z))
+	)
+	player.controls_enabled = true
+	_add_home_marker()
+	_update_hud()
+	return true
