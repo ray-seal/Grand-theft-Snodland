@@ -87,7 +87,7 @@ func _box(parent: Node3D, label: String, pos: Vector3, size: Vector3, mat: Mater
 	return visual
 
 func _building(pos: Vector3, size: Vector3, mat: Material) -> void:
-	_box(self, "Building", pos, size, mat)
+	_box(self, "Building", pos, size, mat, true)
 	_box(self, "Roof", pos + Vector3(0, size.y * 0.52, 0), Vector3(size.x + 0.35, 0.3, size.z + 0.35), materials.roof)
 
 func _make_blockout_world() -> void:
